@@ -3,69 +3,6 @@ import math
 from PIL import Image, ImageDraw, ImageFont
 
 
-# def stitch_images(
-#     images: List[Image.Image],
-#     n_cols: int = 3,
-#     margin: int = 5,
-#     keep_border: bool = False
-# ) -> Image.Image:
-#     """
-#     将一组 PIL.Image.Image 按左到右、从上到下的顺序拼接成网格图像。
-#     - images: 图像列表，数量任意（不足的格子将使用白色填充）。
-#     - n_cols: 每行的列数（网格的列数）。
-#     - margin: 图像之间的边距（像素）。
-#     - keep_border: 是否保留拼接图像外围边距；默认为 False，即裁剪外围 margin。
-#     """
-#     if n_cols < 1:
-#         raise ValueError("n_cols 必须大于等于 1")
-#     m = len(images)
-#     if m == 0:
-#         raise ValueError("需要至少一张图像")
-
-#     # 将所有图片转换为 RGB，确保后续处理一致
-#     imgs = [img.convert('RGB') for img in images]
-
-#     # 计算网格单元的统一尺寸：取提供图片的最大宽和最大高
-#     max_w = max(img.width for img in imgs)
-#     max_h = max(img.height for img in imgs)
-
-#     # 计算网格行数
-#     n_rows = math.ceil(m / n_cols)
-
-#     cell_w, cell_h = max_w, max_h
-
-#     # 计算总画布尺寸（包含四周和格子之间的 margin）
-#     total_w = n_cols * cell_w + margin * (n_cols + 1)
-#     total_h = n_rows * cell_h + margin * (n_rows + 1)
-
-#     # 新建白色背景画布
-#     stitched = Image.new('RGB', (total_w, total_h), color=(255, 255, 255))
-
-#     # 逐格拼接图片（不足的格子用白色填充）
-#     for idx, img in enumerate(imgs):
-#         row = idx // n_cols
-#         col = idx % n_cols
-#         x = margin + col * (cell_w + margin)
-#         y = margin + row * (cell_h + margin)
-
-#         # 统一尺寸
-#         if img.size != (cell_w, cell_h):
-#             img = img.resize((cell_w, cell_h), resample=Image.LANCZOS)
-
-#         stitched.paste(img, (x, y))
-
-#     # 如果不保留边缘，裁剪外围 margin 区域
-#     if not keep_border:
-#         left = margin
-#         top = margin
-#         right = total_w - margin
-#         bottom = total_h - margin
-#         stitched = stitched.crop((left, top, right, bottom))
-
-#     # 保存并返回图像对象
-#     return stitched
-
-
 def stitch_images(
     images: List[Image.Image],
     n_cols: int = 3,
@@ -111,9 +48,16 @@ def stitch_images(
         col = idx % n_cols
         x = margin + col * (cell_w + margin)
         y = margin + row * (cell_h + margin)
-
+        
         if img.size != (cell_w, cell_h):
-            img_resized = img.resize((cell_w, cell_h), resample=Image.LANCZOS)
+            src_w, src_h = img.size
+            dst_w, dst_h = (int(src_w * cell_h / src_h), cell_h) if cell_h < cell_w else (cell_w, int(src_h * cell_w / src_w))
+            img_resized = img.resize((dst_w, dst_h), resample=Image.LANCZOS)
+            if img_resized.size != (cell_w, cell_h):
+                # 居中粘贴
+                paste_x = x + (cell_w - dst_w) // 2
+                paste_y = y + (cell_h - dst_h) // 2
+                x, y = paste_x, paste_y
         else:
             img_resized = img
 
@@ -155,16 +99,6 @@ def stitch_images(
             top = y
             right = left + box_w
             bottom = top + box_h
-
-            # 限制文本框在当前格子范围内
-            # max_right = x + cell_w - padding
-            # max_bottom = y + cell_h - padding
-            # if right > max_right:
-            #     right = max_right
-            #     left = max(left, x + padding)
-            # if bottom > max_bottom:
-            #     bottom = max_bottom
-            #     top = max(top, y + padding)
 
             # 半透明黑底
             draw.rectangle([(left, top), (right, bottom)], fill=(0, 0, 0, 128))

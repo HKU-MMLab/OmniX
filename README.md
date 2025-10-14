@@ -19,6 +19,14 @@ A family of panoramic flow matching models that achieves panorama generation, pe
 <!-- ## 📢 News
 - [2025-10-16] Released. -->
 
+## TODO
+
+- [x] Open source inference code for panorama generation and perception
+- [ ] Open source inference code for graphics-ready 3D scene generation
+- [ ] Open source inference code for panorama completion
+- [ ] Open source PanoX dataset
+- [ ] Open source training code
+
 ## ⚙️ Installation
 Please follow the instructions below to get the code and install dependencies.
 
@@ -41,27 +49,27 @@ pip install -r requirements.txt
 
 ## 🚀 Inference
 
-### Panoramic Generation
+### Panorama Generation
 ```bash
-# Generation from Text
+# Panorama Generation from Text
 python run_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/generation_from_text"
 
-# Generation from Image and Text
+# Panorama Generation from Image and Text
 python run_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/generation_from_image_and_text"
 ```
 
-### Panoramic Perception
+### Panorama Perception
 ```bash
-# Perception from Panorama
+# Multi-Property Perception (Depth, Normal, Albedo, Roughness, Metallic, Semantic) from Panorama
 python run_perception.py --panorama "assets/examples/panorama.png" --output_dir "outputs/perception"
 ```
 
-### Panoramic Generation and Perception
+### Panorama Generation and Perception
 ```bash
-# Generation and Perception from Text
+# Panorama Generation and Perception from Text
 python run_all.py --prompt "Photorealistic modern living room" --output_dir "outputs/generation_and_perception_from_text"
 
-# Generation and Perception from Image and Text
+# Panorama Generation and Perception from Image and Text
 python run_all.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/generation_and_perception_from_image_and_text"
 ```
 
@@ -71,4 +79,10 @@ This repository is based on many amazing research works and open-source projects
 ## 😉 Citation
 If you find this repository helpful for your work, please consider citing it as follows:
 ```bib
+@article{huang2025omnix,
+        title={OmniX: From Unified Panoramic Generation and Perception to Graphics-Ready 3D Scenes},
+        author={},
+        journal={arXiv preprint arXiv:xxxx.xxxxx},
+        year={2025}
+}
 ```

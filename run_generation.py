@@ -57,12 +57,12 @@ if __name__ == '__main__':
     
     # Save Input Image
     image.save(osp.join(output_dir, 'input_image.png'))
-    print(f'Input image saved to {output_dir}!')
+    print(f'Input image saved to {output_dir}')
 
     # Save Masked Input for Visualization Only
     masked_input = omnix.get_masked_panorama(image, height=height, width=width, output_type='pil')
     masked_input.save(osp.join(output_dir, 'input_masked_panorama.png'))
-    print(f'Input masked panorama saved to {output_dir}!')
+    print(f'Input masked panorama saved to {output_dir}')
 
     # Panorama Generation
     print('Generating panorama from image...')
@@ -76,14 +76,14 @@ if __name__ == '__main__':
 
     # Save Output Panorama
     panorama.save(osp.join(output_dir, 'output_panorama.png'))
-    print(f'Output panorama saved to {output_dir}!')
+    print(f'Output panorama saved to {output_dir}')
 
     # Stitch and Save Results
     print('Saving stitched results...')
     stitched = stitch_images(
-        images=[masked_input, panorama],
-        texts=['masked input', 'panorama'],
-        n_cols=1,
+        images=[image, masked_input, panorama],
+        texts=['image input', 'masked input', 'panorama'],
+        n_cols=3,
     )
     stitched.save(osp.join(output_dir, 'output_stitched.png'))
-    print(f'Stitched results saved to {output_dir}!')
+    print(f'Stitched results saved to {output_dir}')

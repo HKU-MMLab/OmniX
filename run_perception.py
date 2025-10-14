@@ -37,38 +37,38 @@ if __name__ == '__main__':
 
     # Save Input Panorama
     panorama.save(osp.join(output_dir, 'input_panorama.png'))
-    print(f'Input panorama saved to {output_dir}!')
+    print(f'Input panorama saved to {output_dir}')
 
     # Panorama Perception - Albedo
     print('Perceiving panoramic albedo...')
     albedo = omnix.perceive_panoramic_albedo(panorama, num_inference_steps=num_inference_steps)
     albedo.save(osp.join(output_dir, 'output_albedo.png'))
-    print(f'Panoramic albedo saved to {output_dir}!')
+    print(f'Panoramic albedo saved to {output_dir}')
 
     # Panorama Perception - Depth
     print('Perceiving panoramic depth...')
     depth = omnix.perceive_panoramic_depth(panorama, num_inference_steps=num_inference_steps)
     depth.save(osp.join(output_dir, 'output_depth.png'))
-    print(f'Panoramic depth saved to {output_dir}!')
+    print(f'Panoramic depth saved to {output_dir}')
     
     # Panorama Perception - Normal
     print('Perceiving panoramic normal...')
     normal = omnix.perceive_panoramic_normal(panorama, num_inference_steps=num_inference_steps)
     normal.save(osp.join(output_dir, 'output_normal.png'))
-    print(f'Panoramic normal saved to {output_dir}!')
+    print(f'Panoramic normal saved to {output_dir}')
     
     # Panorama Perception - PBR Material (Roughness, Metallic)
     print('Perceiving panoramic PBR material...')
     roughness, metallic = omnix.perceive_panoramic_pbr(panorama, num_inference_steps=num_inference_steps)
     roughness.save(osp.join(output_dir, 'output_roughness.png'))
     metallic.save(osp.join(output_dir, 'output_metallic.png'))
-    print(f'Panoramic PBR material saved to {output_dir}!')
+    print(f'Panoramic PBR material saved to {output_dir}')
     
     # Panorama Perception - Semantic
     print('Perceiving panoramic semantic...')
     semantic = omnix.perceive_panoramic_semantic(panorama, num_inference_steps=num_inference_steps)
     semantic.save(osp.join(output_dir, 'output_semantic.png'))
-    print(f'Panoramic semantic saved to {output_dir}!')
+    print(f'Panoramic semantic saved to {output_dir}')
     
     # Stitch and Save Results
     print('Saving stitched results...')
@@ -78,4 +78,4 @@ if __name__ == '__main__':
         n_cols=4,
     )
     stitched.save(osp.join(output_dir, 'output_stitched.png'))
-    print(f'Stitched results saved to {output_dir}!')
+    print(f'Stitched results saved to {output_dir}')
