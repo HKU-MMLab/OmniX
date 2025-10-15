@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+import cv2
 import numpy as np
 import PIL
 from PIL import Image
@@ -919,7 +920,6 @@ def orthogonal_distance_to_depth(orthogonal_distance: torch.Tensor) -> torch.Ten
     return depth
 
 
-# ******************** disparity space ********************
 def depth2disparity(depth, return_mask=False):
     if isinstance(depth, torch.Tensor):
         disparity = torch.zeros_like(depth)
@@ -935,3 +935,60 @@ def depth2disparity(depth, return_mask=False):
 
 def disparity2depth(disparity, **kwargs):
     return depth2disparity(disparity, **kwargs)
+
+
+def detect_depth_jumps(depth_map, gradient_threshold=0.3):
+    """
+    检测深度图中的跳变像素点。
+
+    Parameters:
+        depth_map (ndarray): [H, W] 浮点型深度图
+        gradient_threshold (float): 阈值，用于判断跳变的敏感度（根据具体数据调节）
+
+    Returns:
+        mask (ndarray): [H, W] 布尔类型的掩码，跳变点为True
+    """
+    # 计算深度的梯度
+    grad_x = cv2.Sobel(depth_map, cv2.CV_64F, 1, 0, ksize=3)
+    grad_y = cv2.Sobel(depth_map, cv2.CV_64F, 0, 1, ksize=3)
+
+    # 计算梯度幅值
+    magnitude = np.abs(grad_x) + np.abs(grad_y)
+
+    # 根据阈值判断跳变点
+    mask = magnitude > gradient_threshold
+
+    return mask
+
+
+def smooth_depth(depth_map, d=9, sigma_color=75, sigma_space=75):
+    """
+    对深度图进行平滑处理，同时保持边缘结构。
+
+    Parameters:
+        depth_map (ndarray): [H, W] 浮点型深度图
+        d (int): 双边滤波中邻域的直径（越大越平滑）
+        sigma_color (float): 颜色空间的标准差（影响颜色差异的权重）
+        sigma_space (float): 空间空间的标准差（影响空间距离的权重）
+
+    Returns:
+        smoothed_depth (ndarray): 平滑后的深度图
+    """
+    # 将深度图转换为8位图（可选，根据深度范围调整）
+    # 这里我们假设深度在某个范围内，先归一化到[0,255]
+    depth_min = np.nanmin(depth_map)
+    depth_max = np.nanmax(depth_map)
+    depth_norm = (depth_map - depth_min) / (depth_max - depth_min + 1e-8)
+    depth_uint8 = (depth_norm * 255).astype(np.uint8)
+
+    # 使用双边滤波
+    smoothed_uint8 = cv2.bilateralFilter(depth_uint8, d, sigma_color, sigma_space)
+
+    # 转回浮点深度值
+    smoothed_norm = smoothed_uint8.astype(np.float32) / 255.0
+    smoothed_depth = smoothed_norm * (depth_max - depth_min) + depth_min
+
+    # 处理NaN值（保持原样或用插值填充）
+    smoothed_depth[np.isnan(depth_map)] = np.nan
+
+    return smoothed_depth

@@ -6,7 +6,7 @@
 [![Paper](https://img.shields.io/badge/📑-Paper-red.svg)](https://arxiv.org/abs/xxxx.xxxxx)
 [![Model](https://img.shields.io/badge/🤗-Model-yellow.svg)](https://huggingface.co/KevinHuang/OmniX)
 [![Data](https://img.shields.io/badge/🤗-Data-green.svg)](https://huggingface.co/datasets/KevinHuang/PanoX)
-[![Video](https://img.shields.io/badge/▶️-Video-blue.svg)]()
+[![Video](https://img.shields.io/badge/🎬-Video-blue.svg)]()
 
 </div>
 
@@ -22,7 +22,7 @@ A family of panoramic flow matching models that achieves panorama generation, pe
 ## 📝 TODO
 
 - [x] Release inference code for panorama generation and perception.
-- [ ] Release inference code for graphics-ready 3D scene generation.
+- [x] Release inference code for graphics-ready 3D scene generation (beta).
 - [ ] Release inference code for panorama completion.
 - [ ] Release PanoX dataset.
 - [ ] Release training code.
@@ -52,25 +52,37 @@ pip install -r requirements.txt
 ### Panorama Generation
 ```bash
 # Generation from Text
-python run_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/generation_from_text"
+python run_pano_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/generation_from_text"
 
 # Generation from Image and Text
-python run_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/generation_from_image_and_text"
+python run_pano_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/generation_from_image_and_text"
 ```
 
 ### Panorama Perception
 ```bash
-# Multi-Property Perception (Depth, Normal, Albedo, Roughness, Metallic, Semantic) from Panorama
-python run_perception.py --panorama "assets/examples/panorama.png" --output_dir "outputs/perception"
+# Perception (Depth, Normal, Albedo, Roughness, Metallic, Semantic) from Panorama
+python run_pano_perception.py --panorama "assets/examples/panorama.png" --output_dir "outputs/perception_from_panorama"
 ```
 
 ### Panorama Generation and Perception
 ```bash
 # Generation and Perception from Text
-python run_all.py --prompt "Photorealistic modern living room" --output_dir "outputs/generation_and_perception_from_text"
+python run_pano_all.py --prompt "Photorealistic modern living room" --output_dir "outputs/generation_and_perception_from_text"
 
 # Generation and Perception from Image and Text
-python run_all.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/generation_and_perception_from_image_and_text"
+python run_pano_all.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/generation_and_perception_from_image_and_text"
+```
+
+### Graphics-Ready Scene Generation (Beta)
+```bash
+# Generation from Text
+python run_scene_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/construction_from_text"
+
+# Generation from Image and Text
+python run_scene_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/construction_from_image_and_text"
+
+# Generation (Reconstruction) from Panorama
+python run_scene_generation.py --panorama "assets/examples/panorama.png" --output_dir "outputs/construction_from_panorama"
 ```
 
 ## 👏 Acknowledgement

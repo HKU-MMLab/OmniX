@@ -217,6 +217,13 @@ class OmniX():
                 return Image.fromarray((np.clip(depth * 65535, 0, 65535).astype(np.uint16)))
             else:
                 return DepthVisualizer.visualize_depth(depth)[0]
+        elif output_type == 'np_and_pil':
+            depth_np = depth.float().cpu().numpy()
+            if colormap is None:
+                depth_pil = Image.fromarray((np.clip(depth_np * 65535, 0, 65535).astype(np.uint16)))
+            else:
+                depth_pil = DepthVisualizer.visualize_depth(depth_np)[0]
+            return depth_np, depth_pil
 
     def perceive_panoramic_normal(self,
         panorama: Image.Image,
