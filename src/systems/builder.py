@@ -2,7 +2,7 @@ import os
 import os.path as osp
 import numpy as np
 from PIL import Image
-from einops import einsum
+from einops import einsum, rearrange
 import torch
 import torch.nn.functional as F
 from typing import Optional, Literal, Union
@@ -65,6 +65,51 @@ def get_equi_raymap_torch(h: int, w: int, device, up_axis: str = 'y') -> torch.T
     else:
         raise ValueError(f"Unsupported up_axis: {up_axis}")
     return torch.stack((x, y, z), dim=-1)  # (h, w, 3)
+
+def get_cube_raymap_torch(h: int, w: int, device):
+    assert h == w, "Cube rays require equal height and width"
+    u = (torch.arange(w, device=device).float() + 0.5) / w
+    v = (torch.arange(h, device=device).float() + 0.5) / h
+    vv, uu = torch.meshgrid(v, u, indexing="ij")   # (H, W) order here
+    rays = []
+    for i in range(6):
+        # +Z
+        if i == 0:
+            x = 1 - uu * 2
+            y = 1 - vv * 2
+            z = torch.ones_like(vv)
+        # -X
+        elif i == 1:
+            x = -torch.ones_like(vv)
+            y = 1 - vv * 2
+            z = 1 - uu * 2
+        # -Z
+        elif i == 2:
+            x = uu * 2 - 1
+            y = 1 - vv * 2
+            z = -torch.ones_like(vv)
+        # +X
+        elif i == 3:
+            x = torch.ones_like(vv)
+            y = 1 - vv * 2
+            z = uu * 2 - 1
+        # +Y
+        elif i == 4:
+            x = 1 - uu * 2
+            y = torch.ones_like(vv)
+            z = vv * 2 - 1
+        # -Y
+        elif i == 5:
+            x = 1 - uu * 2
+            y = -torch.ones_like(vv)
+            z = - vv * 2 + 1
+
+        rays.append(torch.stack((x, y, z), dim=-1))
+    
+    rays = torch.stack(rays, dim=0)  # (6, h, w, 3)
+    rays = rays / torch.linalg.norm(rays, dim=-1, keepdim=True)  # Normalize rays
+    
+    return rays
 
 
 # Resize distance and mask if needed
@@ -345,7 +390,15 @@ def copyfile_with_normal_postprocess(normal_path, save_normal_path, from_panox=F
     Image.fromarray(normal).save(save_normal_path)
 
 
-def write_mtl(mtl_path, albedo_path, alpha_path, metallic_path, roughness_path, normal_path, material_name="material0"):
+def write_mtl(
+    mtl_path,
+    albedo_path=None,
+    alpha_path=None,
+    metallic_path=None,
+    roughness_path=None,
+    normal_path=None,
+    material_name="material0",
+):
     """
     创建一个简单的MTL文件, 指定漫反射贴图。
     Args:
@@ -353,23 +406,30 @@ def write_mtl(mtl_path, albedo_path, alpha_path, metallic_path, roughness_path, 
         texture_path: 纹理图片文件名
         material_name: 材质名称
     """
-    mtl_content = f"""# material file
-newmtl {material_name}
-Kd 1.000000 1.000000 1.000000
-Ka 0.500000 0.500000 0.500000
-Ke 0.000000 0.000000 0.000000
-Ks 0.000000 0.000000 0.000000
-Ni 1.450000
-d 1.0
-illum 2
-map_Kd {osp.split(albedo_path)[-1]}
-map_d {osp.split(alpha_path)[-1]}
-map_Pm  {osp.split(metallic_path)[-1]}
-map_Pr {osp.split(roughness_path)[-1]}
-map_Bump -bm 1.000000 {osp.split(normal_path)[-1]}
-"""
+    lines = [
+        "# material file",
+        f"newmtl {material_name}",
+        "Kd 1.000000 1.000000 1.000000",
+        "Ka 1.000000 1.000000 1.000000",
+        "Ke 0.000000 0.000000 0.000000",
+        "Ks 0.000000 0.000000 0.000000",
+        "Ni 1.450000",
+        "d 1.0",
+        "illum 2"
+    ]
+    if albedo_path is not None:
+        lines.append(f"map_Kd {osp.split(albedo_path)[-1]}")
+    if alpha_path is not None:
+        lines.append(f"map_d {osp.split(alpha_path)[-1]}")
+    if metallic_path is not None:
+        lines.append(f"map_Pm {osp.split(metallic_path)[-1]}")
+    if roughness_path is not None:
+        lines.append(f"map_Pr {osp.split(roughness_path)[-1]}")
+    if normal_path is not None:
+        lines.append(f"map_Bump -bm 1.000000 {osp.split(normal_path)[-1]}")
+    
     with open(mtl_path, "w") as f:
-        f.write(mtl_content)
+        f.write("\n".join(lines))
 
 
 def write_obj_with_material(obj_path: str, mtl_path: str, save_obj_path: str, material_name="material0"):
@@ -395,8 +455,8 @@ class MeshBuilder(object):
     
     def _create_vertices(
         self,
-        distance: torch.Tensor,  # (H, W)
-        ray: torch.Tensor       # (H, W, 3)
+        distance: torch.Tensor,  # (..., H, W)
+        ray: torch.Tensor       # (..., H, W, 3)
     ) -> torch.Tensor:
         """
         Create 3D vertices from distance and ray directions.
@@ -413,7 +473,7 @@ class MeshBuilder(object):
         vertices = distance_flat * ray_flat        # (H*W, 3)
         return vertices
 
-    def _create_triangles(
+    def _create_triangles_from_equirectangular(
         self,
         distance: torch.Tensor,  # (H, W)
         mask: torch.Tensor,      # (H, W)
@@ -466,10 +526,107 @@ class MeshBuilder(object):
 
         return faces
 
+    def _create_triangles_from_cubemap(self, H: int, W: int) -> torch.Tensor:
+        """
+        Generate triangle indices for a closed cube mesh from a CubeMap of shape [6, H, W].
+        Returns: [N, 3] triangle index tensor
+        """
+        M = 6
+        all_triangles = []
+
+        # --- Vectorized per-face triangles ---
+        grid_y, grid_x = torch.meshgrid(torch.arange(H - 1), torch.arange(W - 1), indexing='ij')
+        grid_y = grid_y.reshape(-1)
+        grid_x = grid_x.reshape(-1)
+
+        v0 = grid_y * W + grid_x
+        v1 = grid_y * W + (grid_x + 1)
+        v2 = (grid_y + 1) * W + grid_x
+        v3 = (grid_y + 1) * W + (grid_x + 1)
+
+        tris1 = torch.stack([v0, v1, v2], dim=1)
+        tris2 = torch.stack([v2, v1, v3], dim=1)
+        face_tris = torch.cat([tris1, tris2], dim=0)
+
+        for f in range(M):
+            all_triangles.append(face_tris + f * H * W)
+
+        # --- Face edge connections ---
+        def get_edge(face, edge):
+            if edge == 'top':
+                return torch.arange(W) + face * H * W
+            if edge == 'bottom':
+                return torch.arange(W) + face * H * W + (H - 1) * W
+            if edge == 'left':
+                return torch.arange(H) * W + face * H * W
+            if edge == 'right':
+                return torch.arange(H) * W + face * H * W + (W - 1)
+
+        edge_pairs = [
+            (0, 'right', 1, 'left', False),
+            (1, 'right', 2, 'left', False),
+            (2, 'right', 3, 'left', False),
+            (3, 'right', 0, 'left', False),
+
+            (0, 'top', 4, 'bottom', False),
+            (1, 'top', 4, 'right', True),
+            (2, 'top', 4, 'top', True),
+            (3, 'top', 4, 'left', False),
+
+            (0, 'bottom', 5, 'top', False),
+            (1, 'bottom', 5, 'right', False),
+            (2, 'bottom', 5, 'bottom', True),
+            (3, 'bottom', 5, 'left', True),
+        ]
+
+        for fA, eA, fB, eB, rev in edge_pairs:
+            edgeA = get_edge(fA, eA)
+            edgeB = get_edge(fB, eB)
+            if rev:
+                edgeB = edgeB.flip(0)
+
+            v0 = edgeA[:-1]
+            v1 = edgeA[1:]
+            v2 = edgeB[:-1]
+            v3 = edgeB[1:]
+
+            tris1 = torch.stack([v0, v1, v2], dim=1)
+            tris2 = torch.stack([v2, v1, v3], dim=1)
+            all_triangles.append(tris1)
+            all_triangles.append(tris2)
+
+        # --- Add corner sealing triangles ---
+        def vid(f, y, x):
+            return f * H * W + y * W + x
+
+        corners = [
+            # (left, up, front)
+            [vid(3, 0, W - 1), vid(4, H - 1, 0), vid(0, 0, 0)],
+            # (front, up, right)
+            [vid(0, 0, W - 1), vid(4, H - 1, W - 1), vid(1, 0, 0)],
+            # (right, up, back)
+            [vid(1, 0, W - 1), vid(4, 0, W - 1), vid(2, 0, 0)],
+            # (back, up, left)
+            [vid(2, 0, W - 1), vid(4, 0, 0), vid(3, 0, 0)],
+
+            # (left, down, back)
+            [vid(3, H - 1, 0), vid(5, H - 1, 0), vid(2, H - 1, W - 1)],
+            # (back, down, right)
+            [vid(2, H - 1, 0), vid(5, H - 1, W - 1), vid(1, H - 1, W - 1)],
+            # (right, down, front)
+            [vid(1, H - 1, 0), vid(5, 0, W - 1), vid(0, H - 1, W - 1)],
+            # (front, down, left)
+            [vid(0, H - 1, 0), vid(5, 0, 0), vid(3, H - 1, W - 1)],
+        ]
+
+        all_triangles.extend([torch.tensor(corner, dtype=torch.long).unsqueeze(0) for corner in corners])
+
+        return torch.cat(all_triangles, dim=0).long()
+
     def create_mesh_from_equi_distance(
         self,
-        distance: torch.Tensor,                  # (H, W)
-        mask: Optional[torch.Tensor] = None,     # (H, W), boolean
+        distance: torch.Tensor,
+        mask: Optional[torch.Tensor] = None,
         save_path: Optional[str] = None,
         max_size: int = 2048,
         device: Optional[Literal['cuda', 'cpu', 'npu']] = None,
@@ -480,7 +637,6 @@ class MeshBuilder(object):
 
         Args:
             distance: Input distance map tensor (H, W).
-            rays: Input ray directions tensor (H, W, 3). Assumed to originate from (0,0,0).
             mask: Optional boolean mask tensor (H, W). True values indicate regions to potentially exclude.
             max_size: Maximum size (height or width) to resize inputs to.
             save_path: Optional path to save the resulting mesh.
@@ -509,11 +665,146 @@ class MeshBuilder(object):
         ray = get_equi_raymap_torch(distance.shape[0], distance.shape[1], device)
         
         vertices = self._create_vertices(distance, ray)  # (H*W, 3)
-        triangles = self._create_triangles(distance, mask, closed_boundary)  # (F, 3)
+        triangles = self._create_triangles_from_equirectangular(distance, mask, closed_boundary)  # (F, 3)
 
         mesh_o3d = o3d.geometry.TriangleMesh()
         mesh_o3d.vertices = o3d.utility.Vector3dVector(vertices.cpu().numpy())
         mesh_o3d.triangles = o3d.utility.Vector3iVector(triangles.cpu().numpy())
+
+        mesh_o3d.remove_unreferenced_vertices()
+        mesh_o3d.remove_degenerate_triangles()
+
+        if save_path is not None:
+            o3d.io.write_triangle_mesh(save_path, mesh_o3d)
+
+        return mesh_o3d
+
+    def create_mesh_from_cube_distance(
+        self,
+        distance: torch.Tensor,
+        mask: Optional[torch.Tensor] = None,
+        save_path: Optional[str] = None,
+        max_size: int = 2048,
+        device: Optional[Literal['cuda', 'cpu', 'npu']] = None,
+        closed_boundary: bool = True,
+    ) -> o3d.geometry.TriangleMesh:
+        """
+        Converts cubemap distance into an Open3D mesh.
+
+        Args:
+            distance: Input distance map tensor (M, H, W), meters.
+            mask: Optional boolean mask tensor (M, H, W). True values indicate regions to potentially exclude.
+            max_size: Maximum size (height or width) to resize inputs to.
+            device: The torch device ('cuda' or 'cpu') to use for computations.
+
+        Returns:
+            An Open3D TriangleMesh object.
+        """
+        assert distance.ndim == 3, "Distance must be MxHxW"
+        if mask is not None:
+            assert mask.ndim == 3 and mask.shape[:3] == rgb.shape[:3], "Mask shape must match"
+            assert mask.dtype == torch.bool, "Mask must be a boolean tensor"
+
+        if device is None:
+            device = distance.device
+        
+        distance = distance.to(device)
+        if mask is not None:
+            mask = mask.to(device)
+
+        _, H, W = distance.shape
+        if max_size is not None and max(H, W) > max_size:
+            scale = max_size / max(H, W)
+        else:
+            scale = 1.0
+
+        distance = F.interpolate(
+            distance.unsqueeze(1),
+            scale_factor=scale,
+            mode="bilinear",
+            align_corners=False,
+            recompute_scale_factor=False
+        ).squeeze(1)
+
+        rays = get_cube_raymap_torch(distance.shape[1], distance.shape[2], device)
+        
+        if mask is not None:
+            mask = F.interpolate(
+                mask.unsqueeze(1).float(), # Needs float for interpolation
+                scale_factor=scale,
+                mode="bilinear", # Or 'nearest' if sharp boundaries are critical
+                align_corners=False,
+                recompute_scale_factor=False
+            ).squeeze(1)
+            mask = mask > 0.5 # Convert back to boolean
+
+        _, H_new, W_new = distance.shape # Get new dimensions
+
+        # --- Calculate 3D Vertices ---
+        vertices = self._create_vertices(distance, rays)  # (M*H*W, 3)
+
+        # --- Generate Mesh Faces (Triangles from Quads for Cubemap) ---
+        faces = []
+        for face_idx in range(6):  # Iterate over the 6 faces of the cubemap
+            if not closed_boundary or face_idx >= 4:
+                row_indices = torch.arange(0, H_new - 1, device=device)
+                col_indices = torch.arange(0, W_new - 1, device=device)
+                row = row_indices.repeat(W_new - 1)
+                col = col_indices.repeat_interleave(H_new - 1)
+
+                offsets = face_idx * (H_new * W_new)  # Offset for each face
+
+                tl = offsets + row * W_new + col      # Top-left
+                tr = tl + 1                           # Top-right
+                bl = tl + W_new                       # Bottom-left
+                br = bl + 1                           # Bottom-right
+            else:
+                row_indices = torch.arange(0, H_new - 1, device=device)
+                col_indices = torch.arange(0, W_new, device=device)
+                row = row_indices.repeat(W_new)
+                col = col_indices.repeat_interleave(H_new - 1)
+
+                offset = H_new * W_new
+                start = face_idx * (H_new * W_new)  # Offset for each face
+
+                if face_idx in (0, 1, 2):
+                    tl = start + row * W_new + col                               # Top-left
+                    tr = start + row * W_new + (col + 1) % W_new + (col + 1) // W_new * offset # Top-right
+                    bl = tl + W_new                                                 # Bottom-left
+                    br = start + (row + 1) * W_new + (col + 1) % W_new + (col + 1) // W_new * offset  # Bottom-right
+                else:
+                    tl = start + row * W_new + col                               # Top-left
+                    tr = start + row * W_new + (col + 1) % W_new + (col + 1) // W_new * (-3 * offset) # Top-right
+                    bl = tl + W_new                                                 # Bottom-left
+                    br = start + (row + 1) * W_new + (col + 1) % W_new + (col + 1) // W_new * (-3 * offset)  # Bottom-right
+
+            # Apply mask if provided
+            if mask is not None:
+                mask_face = mask[face_idx]
+                mask_tl = mask_face[row, col]
+                mask_tr = mask_face[row, col + 1]
+                mask_bl = mask_face[row + 1, col]
+                mask_br = mask_face[row + 1, col + 1]
+
+                quad_keep_mask = ~(mask_tl | mask_tr | mask_bl | mask_br)
+
+                keep_indices = quad_keep_mask.nonzero(as_tuple=False).squeeze(-1)
+                tl = tl[keep_indices]
+                tr = tr[keep_indices]
+                bl = bl[keep_indices]
+                br = br[keep_indices]
+
+            # --- Create Triangles ---
+            tri1 = torch.stack([tl, tr, bl], dim=1)
+            tri2 = torch.stack([tr, br, bl], dim=1)
+            faces.append(torch.cat([tri1, tri2], dim=0))
+
+        faces = torch.cat(faces, dim=0)  # Combine faces from all cubemap sides
+        faces = self._create_triangles_from_cubemap(H_new, W_new)
+
+        mesh_o3d = o3d.geometry.TriangleMesh()
+        mesh_o3d.vertices = o3d.utility.Vector3dVector(vertices.cpu().numpy())
+        mesh_o3d.triangles = o3d.utility.Vector3iVector(faces.cpu().numpy())
 
         mesh_o3d.remove_unreferenced_vertices()
         mesh_o3d.remove_degenerate_triangles()
@@ -575,15 +866,16 @@ class MeshBuilder(object):
         self,
         input_path: str,
         output_path: str,
-        input_albedo_path: str,
-        input_alpha_path: str,
-        input_normal_path: str,
-        input_roughness_path: str,
-        input_metallic_path: str,
+        input_albedo_path: Optional[str] = None,
+        input_alpha_path: Optional[str] = None,
+        input_normal_path: Optional[str] = None,
+        input_roughness_path: Optional[str] = None,
+        input_metallic_path: Optional[str] = None,
         method: str = 'equi',  # 'xatlas' or 'equi'
     ):
         output_file = osp.splitext(output_path)[0]
         output_mtl_path = output_file + '.mtl'
+
         output_albedo_path = output_file + '_albedo.png'
         output_alpha_path = output_file + '_alpha.png'
         output_normal_path = output_file + '_normal.png'
@@ -593,37 +885,51 @@ class MeshBuilder(object):
         if method == 'xatlas':
             mesh = trimesh.load(input_path, process=False)
             
-            albedo_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_albedo_path)))
-            Image.fromarray(albedo_texture).save(output_albedo_path)
+            if input_albedo_path is not None:
+                albedo_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_albedo_path)))
+                Image.fromarray(albedo_texture).save(output_albedo_path)
             
-            alpha_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_alpha_path)))
-            Image.fromarray(alpha_texture).save(output_alpha_path)
+            if input_alpha_path is not None:
+                alpha_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_alpha_path)))
+                Image.fromarray(alpha_texture).save(output_alpha_path)
             
-            normal_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_normal_path)))
-            Image.fromarray(normal_texture).save(output_normal_path)
-            
-            roughness_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_roughness_path)))
-            Image.fromarray(roughness_texture).save(output_roughness_path)
-            
-            metallic_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_metallic_path)))
-            Image.fromarray(metallic_texture).save(output_metallic_path)
+            if input_normal_path is not None:
+                normal_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_normal_path)))
+                Image.fromarray(normal_texture).save(output_normal_path)
+
+            if input_roughness_path is not None:
+                roughness_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_roughness_path)))
+                Image.fromarray(roughness_texture).save(output_roughness_path)
+                
+            if input_metallic_path is not None:
+                metallic_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_metallic_path)))
+                Image.fromarray(metallic_texture).save(output_metallic_path)
             
         else:
-            copyfile(input_albedo_path, output_albedo_path)
-            copyfile(input_alpha_path, output_alpha_path)
-            # copyfile_with_albedo_postprocess(input_albedo_path, output_albedo_path)
-            copyfile_with_normal_postprocess(input_normal_path, output_normal_path)
-            copyfile(input_roughness_path, output_roughness_path)
-            copyfile(input_metallic_path, output_metallic_path)
+            if input_albedo_path is not None:
+                copyfile(input_albedo_path, output_albedo_path)
+                # copyfile_with_albedo_postprocess(input_albedo_path, output_albedo_path)
+            
+            if input_alpha_path is not None:
+                copyfile(input_alpha_path, output_alpha_path)
+    
+            if input_normal_path is not None:
+                copyfile_with_normal_postprocess(input_normal_path, output_normal_path)
+    
+            if input_roughness_path is not None:
+                copyfile(input_roughness_path, output_roughness_path)
+    
+            if input_metallic_path is not None:
+                copyfile(input_metallic_path, output_metallic_path)
         
         material_name = "material0"
         write_mtl(
             mtl_path=output_mtl_path,
-            albedo_path=output_albedo_path,
-            alpha_path=output_alpha_path,
-            normal_path=output_normal_path,
-            roughness_path=output_roughness_path,
-            metallic_path=output_metallic_path,
+            albedo_path=output_albedo_path if osp.isfile(output_albedo_path) else None,
+            alpha_path=output_alpha_path if osp.isfile(output_alpha_path) else None,
+            normal_path=output_normal_path if osp.isfile(output_normal_path) else None,
+            roughness_path=output_roughness_path if osp.isfile(output_roughness_path) else None,
+            metallic_path=output_metallic_path if osp.isfile(output_metallic_path) else None,
             material_name=material_name,
         )
         write_obj_with_material(

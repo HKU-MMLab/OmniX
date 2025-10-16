@@ -992,3 +992,51 @@ def smooth_depth(depth_map, d=9, sigma_color=75, sigma_space=75):
     smoothed_depth[np.isnan(depth_map)] = np.nan
 
     return smoothed_depth
+
+
+def fill_invalid_depth(depth_map, mask, method='linear'):
+    """
+    使用插值填充深度图中无效像素。
+
+    Args:
+        depth_map (ndarray): [H, W]，浮点型深度图。
+        mask (ndarray): [H, W]，布尔类型，True表示像素无效（需要填充）。
+        method (str): 插值方法，可选'linear', 'nearest', 'cubic'。
+
+    Returns:
+        ndarray: 填充后的深度图，类型与输入相同。
+    """
+    from scipy.interpolate import griddata
+
+    H, W = depth_map.shape
+
+    # 获取有效像素的坐标和值
+    valid_mask = ~mask  # True为有效
+    valid_y, valid_x = np.where(valid_mask)
+    valid_depth = depth_map[valid_mask]
+
+    # 获取无效像素的坐标
+    invalid_y, invalid_x = np.where(mask)
+
+    # 如果全部无效或全部有效，直接返回原图
+    if len(valid_depth) == 0:
+        # print("没有有效像素，无法插值。")
+        return depth_map
+    if len(valid_depth) == H*W:
+        # print("所有像素都是有效的，无需填充。")
+        return depth_map
+
+    # 进行插值
+    points = np.stack((valid_x, valid_y), axis=-1)
+    points_invalid = np.stack((invalid_x, invalid_y), axis=-1)
+
+    # 使用griddata进行插值
+    filled_values = griddata(points, valid_depth, points_invalid, method=method)
+
+    # 创建新深度图
+    new_depth = depth_map.copy()
+
+    # 填充无效像素
+    new_depth[invalid_y, invalid_x] = filled_values
+
+    return new_depth

@@ -68,9 +68,20 @@ def build_scene(
     normal_path = import_mesh_path.replace('.obj', '_normal.png')
     metallic_path = import_mesh_path.replace('.obj', '_metallic.png')
     roughness_path = import_mesh_path.replace('.obj', '_roughness.png')
-    # alpha_path = import_mesh_path.replace('.obj', '_alpha.png')
+    alpha_path = import_mesh_path.replace('.obj', '_alpha.png')
+    depth_path = import_mesh_path.replace('.obj', '_depth.png')
+
+    if not osp.isfile(albedo_path):
+        albedo_path = None
+    if not osp.isfile(normal_path):
+        normal_path = None
+    if not osp.isfile(metallic_path):
+        metallic_path = None
+    if not osp.isfile(roughness_path):
+        roughness_path = None
     alpha_path = None
     depth_path = None
+
 
     # 清空场景
     reset_scene()

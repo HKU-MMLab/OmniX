@@ -13,7 +13,7 @@
 <p align="left">
 <img src="assets/teaser.png" width="100%">
 <br>
-A family of panoramic flow matching models that achieves panorama generation, perception, and completion.
+We introduce <b>OmniX</b>, a family of flow matching generative models that achieves <b>unified panorama perception, generation, and completion</b>. Using OmniX as a world generator, we can create graphics-ready 3D scenes ready for physically based rendering, relighting, and simualtion.
 </p>
 
 <!-- ## 📢 News
@@ -81,12 +81,15 @@ python run_scene_generation.py --prompt "Photorealistic modern living room" --ou
 # Generation from Image and Text
 python run_scene_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/construction_from_image_and_text"
 
-# Generation (Reconstruction) from Panorama
+# Generation from Panorama
 python run_scene_generation.py --panorama "assets/examples/panorama.png" --output_dir "outputs/construction_from_panorama"
+
+# Generation from Panorama (Fast)
+python run_scene_generation.py --panorama "assets/examples/panorama.png" --output_dir "outputs/construction_from_image_and_text" --sr 4 --rgb_as_albedo --disable_normal --use_default_pbr --fill_invalid_depth
 ```
 
 ## 👏 Acknowledgement
-This repository is based on many amazing research works and open-source projects: [PanFusion](https://github.com/chengzhag/PanFusion), [diffusers](https://github.com/huggingface/diffusers), [equilib](https://github.com/haruishi43/equilib), etc. Thanks all the authors for their selfless contributions to the community!
+This repository is based on many amazing research works and open-source projects: [PanFusion](https://github.com/chengzhag/PanFusion), [WorldGen](https://github.com/ZiYang-xie/WorldGen), [diffusers](https://github.com/huggingface/diffusers), [equilib](https://github.com/haruishi43/equilib), etc. Thanks all the authors for their selfless contributions to the community!
 
 ## 😉 Citation
 If you find this repository helpful for your work, please consider citing it as follows:
