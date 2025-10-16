@@ -1,5 +1,5 @@
 basicsr==1.4.2
-bpy==4.4.3
+# bpy==4.4.3
 diffusers==0.32.0
 einops==0.8.0
 matplotlib==3.9.0

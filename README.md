@@ -30,22 +30,31 @@ We introduce <b>OmniX</b>, a family of flow matching generative models that achi
 ## ⚙️ Installation
 Please follow the instructions below to get the code and install dependencies.
 
-Clone the repo:
+### Clone the repo:
 ```bash
 git clone https://github.com/HKU-MMLab/OmniX.git
 cd OmniX
 ```
 
-Create a conda environment (optional):
+### Create a conda environment:
 ```
 conda create -n omnix python=3.11
 conda activate omnix
 ```
 
-Install dependencies:
+### Install dependencies:
 ```
 pip install -r requirements.txt
 ```
+
+### Install Blender (optional, for exporting 3D scenes only):
+Please refer to the [official installation guide](https://www.blender.org/download/) to install Blender on your PC or remote server. We use Blender 4.4.3 for Linux.
+
+Alternatively, you may use:
+```
+pip install bpy
+```
+to use the Blender Python API without installing the full Blender, but we haven't tested this carefully.
 
 ## 🚀 Inference
 
