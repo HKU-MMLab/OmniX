@@ -77,19 +77,22 @@ python run_pano_all.py --image "assets/examples/image.png" --prompt "Photorealis
 ```bash
 # Generation from Text
 python run_scene_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/construction_from_text"
+# Generation from Text (Fast)
+python run_scene_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/construction_fast_from_text" --rgb_as_albedo --disable_normal --use_default_pbr --fill_invalid_depth
 
 # Generation from Image and Text
 python run_scene_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/construction_from_image_and_text"
+# Generation from Image and Text (Fast)
+python run_scene_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/construction_fast_from_image_and_text" --rgb_as_albedo --disable_normal --use_default_pbr --fill_invalid_depth
 
 # Generation from Panorama
 python run_scene_generation.py --panorama "assets/examples/panorama.png" --output_dir "outputs/construction_from_panorama"
-
 # Generation from Panorama (Fast)
-python run_scene_generation.py --panorama "assets/examples/panorama.png" --output_dir "outputs/construction_from_image_and_text" --sr 4 --rgb_as_albedo --disable_normal --use_default_pbr --fill_invalid_depth
+python run_scene_generation.py --panorama "assets/examples/panorama.png" --output_dir "outputs/construction_fast_from_panorama" --rgb_as_albedo --disable_normal --use_default_pbr --fill_invalid_depth
 ```
 
 ## 👏 Acknowledgement
-This repository is based on many amazing research works and open-source projects: [PanFusion](https://github.com/chengzhag/PanFusion), [WorldGen](https://github.com/ZiYang-xie/WorldGen), [diffusers](https://github.com/huggingface/diffusers), [equilib](https://github.com/haruishi43/equilib), etc. Thanks all the authors for their selfless contributions to the community!
+This repository is based on many amazing research works and open-source projects: [PanFusion](https://github.com/chengzhag/PanFusion), [DreamCube](https://github.com/Yukun-Huang/DreamCube), [WorldGen](https://github.com/ZiYang-xie/WorldGen), [diffusers](https://github.com/huggingface/diffusers), [equilib](https://github.com/haruishi43/equilib), etc. Thanks all the authors for their selfless contributions to the community!
 
 ## 😉 Citation
 If you find this repository helpful for your work, please consider citing it as follows:

@@ -154,7 +154,7 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, default=None, help='Device to use: "cpu", "cuda", or "npu"')
     parser.add_argument('--height', type=int, default=512, help='Height of the generated panorama')
     parser.add_argument('--width', type=int, default=1024, help='Width of the generated panorama')
-    parser.add_argument('--sr', type=int, default=1, help='Super-resolution scale factor (1: no SR, 2: 2x SR, 4: 4x SR)')
+    parser.add_argument('--sr', type=int, default=4, help='Super-resolution scale factor (1: no SR, 2: 2x SR, 4: 4x SR)')
     parser.add_argument('--num_inference_steps', type=int, default=50, help='Number of inference steps')
     parser.add_argument('--output_dir', type=str, default='outputs/construction', help='Output directory')
     parser.add_argument('--lifting_method', type=str, default='cube', help='Lifting method for mesh creation: "equi" or "cube"')
