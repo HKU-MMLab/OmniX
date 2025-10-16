@@ -77,7 +77,14 @@ def run_perception(panorama: Image.Image):
     # print(f'Panoramic semantic saved to {output_dir}')
     semantic = None  # Not used in construction for now
     
-    return albedo, depth, normal, roughness, metallic, semantic
+    # Panorama Pereption - Alpha
+    # print('Perceiving panoramic alpha...')
+    # alpha = omnix.perceive_panoramic_alpha(panorama, num_inference_steps=num_inference_steps)
+    alpha = Image.fromarray(np.full_like(np.array(albedo)[:, :, 0], 255))
+    alpha.save(osp.join(output_dir, 'output_alpha.png'))
+    print(f'Panoramic alpha saved to {output_dir}')
+    
+    return albedo, depth, normal, roughness, metallic, semantic, alpha
 
 
 def export_3d_scene(
@@ -89,7 +96,7 @@ def export_3d_scene(
     light_type: str = 'POINT',
     use_sphere: bool = False,
     flip_normal: bool = True,
-    use_backface_culling: bool = True,
+    use_backface_culling: bool = False,
 ):
     base_command = \
         f'blender -b -P export_3d_scene_bpy.py -- ' \
@@ -169,7 +176,7 @@ if __name__ == '__main__':
 
         ## Load Panorama and Run Perception
         panorama = Image.open(osp.join(output_dir, 'input_panorama.png')).convert('RGB')
-        albedo, depth, normal, roughness, metallic, semantic = run_perception(panorama)
+        albedo, depth, normal, roughness, metallic, semantic, alpha = run_perception(panorama)
 
         ## Stitch and Save Results
         print('Saving stitched results...')
@@ -228,6 +235,7 @@ if __name__ == '__main__':
             input_path=osp.join(untextured_output_dir, 'unwrapped_mesh.obj'),
             output_path=osp.join(output_dir, 'textured_mesh.obj'),
             input_albedo_path=osp.join(panorama_dir, 'output_albedo.png'),
+            input_alpha_path=osp.join(panorama_dir, 'output_alpha.png'),
             input_normal_path=osp.join(panorama_dir, 'output_normal.png'),
             input_roughness_path=osp.join(panorama_dir, 'output_roughness.png'),
             input_metallic_path=osp.join(panorama_dir, 'output_metallic.png'),
@@ -236,12 +244,12 @@ if __name__ == '__main__':
         ## Export 3D Scene
         export_3d_scene(
             import_mesh_path=osp.join(textured_output_dir, 'textured_mesh.obj'),
-            export_gltf_path=osp.join(args.output_dir, 'export_gltf', 'scene.glb'),
-            export_fbx_path=osp.join(args.output_dir, 'export_fbx', 'scene.fbx'),
+            # export_gltf_path=osp.join(args.output_dir, 'export_gltf', 'scene.glb'),  # Some textures (e.g., world normal) are incompatible
+            # export_fbx_path=osp.join(args.output_dir, 'export_fbx', 'scene.fbx'),    # Untested
             export_blend_path=osp.join(args.output_dir, 'export_blend', 'scene.blend'),
             light_energy=100.0,
             light_type='POINT',
             use_sphere=False,
             flip_normal=True,
-            use_backface_culling=True,
+            use_backface_culling=False,
         )

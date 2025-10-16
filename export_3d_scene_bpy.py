@@ -56,11 +56,6 @@ class ArgumentParserForBlender(argparse.ArgumentParser):
 def build_scene(
     import_mesh_path: str,
     scene_name: str = 'Scene',
-    albedo_path: Optional[str] = None,
-    normal_path: Optional[str] = None,
-    depth_path: Optional[str] = None,
-    roughness_path: Optional[str] = None,
-    metallic_path: Optional[str] = None,
     material_name: str = "material0",
     use_backface_culling: bool = True,
     flip_normal: bool = True,
@@ -73,6 +68,9 @@ def build_scene(
     normal_path = import_mesh_path.replace('.obj', '_normal.png')
     metallic_path = import_mesh_path.replace('.obj', '_metallic.png')
     roughness_path = import_mesh_path.replace('.obj', '_roughness.png')
+    # alpha_path = import_mesh_path.replace('.obj', '_alpha.png')
+    alpha_path = None
+    depth_path = None
 
     # 清空场景
     reset_scene()
@@ -100,6 +98,7 @@ def build_scene(
     mat = bpy.data.materials.new(material_name)
     obj.data.materials.append(mat)
     mat.use_nodes = True
+    mat.blend_method = 'HASHED'  # [OPAQUE, CLIP, HASHED, BLEND]
     mat.use_backface_culling = use_backface_culling
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
@@ -107,24 +106,42 @@ def build_scene(
     # 获取Principled BSDF节点
     bsdf = nodes.get('Principled BSDF')
     assert bsdf, "Principled BSDF node not found in material."
+    bsdf.location = (300, 0)
+
+    # 获取材质输出节点
+    material_output = nodes.get('Material Output')
+    assert material_output, "Material Output node not found in material."
+    material_output.location = (600, 0)
 
     # Albedo
     if albedo_path is not None:
         albedo_tex = nodes.new(type='ShaderNodeTexImage')
+        albedo_tex.location = (-300, 0)
         albedo_tex.image = bpy.data.images.load(albedo_path)
         albedo_tex.label = 'Albedo'
         albedo_tex.image.colorspace_settings.name = 'sRGB'
         albedo_tex.image.alpha_mode = 'STRAIGHT'  # [STRAIGHT, PREMUL, CHANNEL_PACKED, NONE]
         links.new(albedo_tex.outputs['Color'], bsdf.inputs['Base Color'])
-        links.new(albedo_tex.outputs['Alpha'], bsdf.inputs['Alpha'])
+        # links.new(albedo_tex.outputs['Alpha'], bsdf.inputs['Alpha'])
 
+    # # Alpha
+    if alpha_path is not None:
+        alpha_tex = nodes.new(type='ShaderNodeTexImage')
+        alpha_tex.location = (-300, 300)
+        alpha_tex.image = bpy.data.images.load(alpha_path)
+        alpha_tex.label = 'Alpha'
+        alpha_tex.image.colorspace_settings.name = 'Non-Color'
+        links.new(alpha_tex.outputs['Color'], bsdf.inputs['Alpha'])
+    
     # Normal
     if normal_path is not None:
         normal_tex = nodes.new(type='ShaderNodeTexImage')
+        normal_tex.location = (-300, -300)
         normal_tex.image = bpy.data.images.load(normal_path)
         normal_tex.label = 'Normal'
         normal_tex.image.colorspace_settings.name = 'Non-Color'
         normal_map = nodes.new(type='ShaderNodeNormalMap')
+        normal_map.location = (0, -300)
         normal_map.name = 'Normal Map'
         normal_map.space = 'WORLD'
         links.new(normal_tex.outputs['Color'], normal_map.inputs['Color'])
@@ -133,6 +150,7 @@ def build_scene(
     # Metallic
     if metallic_path is not None:
         metallic_tex = nodes.new(type='ShaderNodeTexImage')
+        metallic_tex.location = (-300, -600)
         metallic_tex.image = bpy.data.images.load(metallic_path)
         metallic_tex.label = 'Metallic'
         metallic_tex.image.colorspace_settings.name = 'Non-Color'
@@ -141,6 +159,7 @@ def build_scene(
     # Roughness
     if roughness_path is not None:
         roughness_tex = nodes.new(type='ShaderNodeTexImage')
+        roughness_tex.location = (0, -600)
         roughness_tex.image = bpy.data.images.load(roughness_path)
         roughness_tex.label = 'Roughness'
         roughness_tex.image.colorspace_settings.name = 'Non-Color'
@@ -149,6 +168,7 @@ def build_scene(
     # Depth
     if depth_path is not None:
         depth_tex = nodes.new(type='ShaderNodeTexImage')
+        depth_tex.location = (-300, -900)
         depth_tex.image = bpy.data.images.load(depth_path)
         depth_tex.label = 'Distance'
         depth_tex.image.colorspace_settings.name = 'Non-Color'

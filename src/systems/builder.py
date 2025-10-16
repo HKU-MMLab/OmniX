@@ -345,7 +345,7 @@ def copyfile_with_normal_postprocess(normal_path, save_normal_path, from_panox=F
     Image.fromarray(normal).save(save_normal_path)
 
 
-def write_mtl(mtl_path, albedo_path, metallic_path, roughness_path, normal_path, material_name="material0"):
+def write_mtl(mtl_path, albedo_path, alpha_path, metallic_path, roughness_path, normal_path, material_name="material0"):
     """
     创建一个简单的MTL文件, 指定漫反射贴图。
     Args:
@@ -363,6 +363,7 @@ Ni 1.450000
 d 1.0
 illum 2
 map_Kd {osp.split(albedo_path)[-1]}
+map_d {osp.split(alpha_path)[-1]}
 map_Pm  {osp.split(metallic_path)[-1]}
 map_Pr {osp.split(roughness_path)[-1]}
 map_Bump -bm 1.000000 {osp.split(normal_path)[-1]}
@@ -575,6 +576,7 @@ class MeshBuilder(object):
         input_path: str,
         output_path: str,
         input_albedo_path: str,
+        input_alpha_path: str,
         input_normal_path: str,
         input_roughness_path: str,
         input_metallic_path: str,
@@ -583,6 +585,7 @@ class MeshBuilder(object):
         output_file = osp.splitext(output_path)[0]
         output_mtl_path = output_file + '.mtl'
         output_albedo_path = output_file + '_albedo.png'
+        output_alpha_path = output_file + '_alpha.png'
         output_normal_path = output_file + '_normal.png'
         output_metallic_path = output_file + '_metallic.png'
         output_roughness_path = output_file + '_roughness.png'
@@ -592,6 +595,9 @@ class MeshBuilder(object):
             
             albedo_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_albedo_path)))
             Image.fromarray(albedo_texture).save(output_albedo_path)
+            
+            alpha_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_alpha_path)))
+            Image.fromarray(alpha_texture).save(output_alpha_path)
             
             normal_texture = map_equi_to_uv_texture(mesh, np.array(Image.open(input_normal_path)))
             Image.fromarray(normal_texture).save(output_normal_path)
@@ -603,7 +609,9 @@ class MeshBuilder(object):
             Image.fromarray(metallic_texture).save(output_metallic_path)
             
         else:
-            copyfile_with_albedo_postprocess(input_albedo_path, output_albedo_path)
+            copyfile(input_albedo_path, output_albedo_path)
+            copyfile(input_alpha_path, output_alpha_path)
+            # copyfile_with_albedo_postprocess(input_albedo_path, output_albedo_path)
             copyfile_with_normal_postprocess(input_normal_path, output_normal_path)
             copyfile(input_roughness_path, output_roughness_path)
             copyfile(input_metallic_path, output_metallic_path)
@@ -612,6 +620,7 @@ class MeshBuilder(object):
         write_mtl(
             mtl_path=output_mtl_path,
             albedo_path=output_albedo_path,
+            alpha_path=output_alpha_path,
             normal_path=output_normal_path,
             roughness_path=output_roughness_path,
             metallic_path=output_metallic_path,
