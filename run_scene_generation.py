@@ -99,7 +99,7 @@ def export_3d_scene(
     use_backface_culling: bool = False,
 ):
     base_command = \
-        f'blender -b -P export_3d_scene_bpy.py -- ' \
+        f'blender -b -P export_3d_scene_blender.py -- ' \
         f'--import_mesh_path "{import_mesh_path}" ' \
         f'--export_gltf_path "{export_gltf_path}" ' \
         f'--export_fbx_path "{export_fbx_path}" ' \
