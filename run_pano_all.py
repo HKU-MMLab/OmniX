@@ -83,7 +83,7 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, default=None, help='Device to use: "cpu", "cuda", or "npu"')
     parser.add_argument('--height', type=int, default=512, help='Height of the image')
     parser.add_argument('--width', type=int, default=1024, help='Width of the image')
-    parser.add_argument('--num_inference_steps', type=int, default=50, help='Number of inference steps')
+    parser.add_argument('--num_inference_steps', type=int, default=28, help='Number of inference steps')
     parser.add_argument('--output_dir', type=str, default='outputs/generation_and_perception', help='Output directory')
     args = parser.parse_args()
 

@@ -45,8 +45,9 @@ class OmniX():
         X: str,
         max_height: int = 720,
         max_width: int = 1440,
-        num_inference_steps: int = 50,
+        num_inference_steps: int = 28,
         output_type: str = 'pil',
+        with_camray: bool = False,
     ) -> Any:
         """
         Returns:
@@ -58,12 +59,18 @@ class OmniX():
         assert height * 2 == width, "Width must be twice the height for equirectangular panorama."
         assert output_type in ['pil', 'np', 'pt'], "output_type must be one of ['pil', 'np', 'pt']"
 
-        self.set_task(f'rgb_to_{X}')
+        if not with_camray:
+            self.set_task(f'rgb_to_{X}')
+        else:
+            self.set_task(f'rgb_camray_to_{X}')
         
         if height > max_height or width > max_width:
             panorama = panorama.resize((max_width, max_height), Image.LANCZOS)
         
         conditions = {'rgb': self.get_condition(panorama)}
+        if with_camray:
+            conditions['camray'] = self.get_camray(height, width)
+        
         augmented_prompt = self.pipe.get_camera_specific_prompt()
 
         return self.pipe(
@@ -104,6 +111,23 @@ class OmniX():
         image = rearrange(image, 'h w c -> 1 c h w')
         return image
 
+    def get_camray(self, height: int, width: int):
+        # Front: +X, Up: +Y, Left: +Z
+        i = torch.arange(height, device=self.device, dtype=self.dtype)
+        j = torch.arange(width, device=self.device, dtype=self.dtype)
+        v, u = torch.meshgrid(i, j, indexing='ij')  # (height, width)
+        
+        lon = (0.5 - (u + 0.5) / width) * 2 * torch.pi  # 横向角度：π 到 -π
+        lat = (0.5 - (v + 0.5) / height) * torch.pi     # 纵向角度：π/2 到 -π/2
+        
+        x = torch.cos(lat) * torch.cos(lon)
+        y = torch.sin(lat)
+        z = torch.cos(lat) * torch.sin(lon)
+        
+        raymap = torch.stack((x, y, z), dim=-1)  # shape: (height, width, 3)
+        raymap = rearrange(raymap, 'h w c -> 1 c h w')
+        return raymap
+    
     def set_task(self, task: str):
         if self.current_task is not None and self.current_task == task:
             return
@@ -114,7 +138,7 @@ class OmniX():
         prompt: str,
         height: int = 512,
         width: int = 512,
-        num_inference_steps: int = 50,
+        num_inference_steps: int = 28,
         output_type: str = 'pil',
     ) -> Any:
         self.set_task('text_to_image')
@@ -132,7 +156,7 @@ class OmniX():
         height: int = 512,
         width: int = 1024,
         image_fov_x: float = 90.0,
-        num_inference_steps: int = 50,
+        num_inference_steps: int = 28,
         output_type: str = 'pil',
     ) -> Any:
         """
@@ -167,7 +191,7 @@ class OmniX():
         panorama: Image.Image,
         max_height: int = 720,
         max_width: int = 1440,
-        num_inference_steps: int = 50,
+        num_inference_steps: int = 28,
         output_type: str = 'pil',
     ) -> Any:
         """
@@ -189,7 +213,7 @@ class OmniX():
         panorama: Image.Image,
         max_height: int = 720,
         max_width: int = 1440,
-        num_inference_steps: int = 50,
+        num_inference_steps: int = 28,
         output_type: str = 'pil',
         colormap: Optional[str] = 'Spectral',
     ) -> Any:
@@ -229,9 +253,10 @@ class OmniX():
         panorama: Image.Image,
         max_height: int = 720,
         max_width: int = 1440,
-        num_inference_steps: int = 50,
+        num_inference_steps: int = 28,
         output_type: str = 'pil',
         postprocess: bool = False,
+        with_camray: bool = False,
     ) -> Any:
         """
         Returns:
@@ -246,6 +271,7 @@ class OmniX():
             max_width=max_width,
             num_inference_steps=num_inference_steps,
             output_type=output_type,
+            with_camray=with_camray,
         )
         if postprocess:
             raise NotImplementedError("Normal postprocessing is not implemented yet.")
@@ -255,7 +281,7 @@ class OmniX():
         panorama: Image.Image,
         max_height: int = 720,
         max_width: int = 1440,
-        num_inference_steps: int = 50,
+        num_inference_steps: int = 28,
         output_type: str = 'pil',
     ) -> Any:
         """
@@ -294,7 +320,7 @@ class OmniX():
         panorama: Image.Image,
         max_height: int = 720,
         max_width: int = 1440,
-        num_inference_steps: int = 50,
+        num_inference_steps: int = 28,
         output_type: str = 'pil',
     ) -> Any:
         """

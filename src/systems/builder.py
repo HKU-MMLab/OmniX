@@ -702,7 +702,7 @@ class MeshBuilder(object):
         """
         assert distance.ndim == 3, "Distance must be MxHxW"
         if mask is not None:
-            assert mask.ndim == 3 and mask.shape[:3] == rgb.shape[:3], "Mask shape must match"
+            assert mask.ndim == 3 and mask.shape[:3] == distance.shape[:3], "Mask shape must match"
             assert mask.dtype == torch.bool, "Mask must be a boolean tensor"
 
         if device is None:
@@ -716,28 +716,29 @@ class MeshBuilder(object):
         if max_size is not None and max(H, W) > max_size:
             scale = max_size / max(H, W)
         else:
-            scale = 1.0
+            scale = None
 
-        distance = F.interpolate(
-            distance.unsqueeze(1),
-            scale_factor=scale,
-            mode="bilinear",
-            align_corners=False,
-            recompute_scale_factor=False
-        ).squeeze(1)
-
-        rays = get_cube_raymap_torch(distance.shape[1], distance.shape[2], device)
-        
-        if mask is not None:
-            mask = F.interpolate(
-                mask.unsqueeze(1).float(), # Needs float for interpolation
+        if scale is not None:
+            distance = F.interpolate(
+                distance.unsqueeze(1),
                 scale_factor=scale,
-                mode="bilinear", # Or 'nearest' if sharp boundaries are critical
+                mode="bilinear",
                 align_corners=False,
                 recompute_scale_factor=False
             ).squeeze(1)
-            mask = mask > 0.5 # Convert back to boolean
 
+            if mask is not None:
+                mask = F.interpolate(
+                    mask.unsqueeze(1).float(), # Needs float for interpolation
+                    scale_factor=scale,
+                    mode="bilinear", # Or 'nearest' if sharp boundaries are critical
+                    align_corners=False,
+                    recompute_scale_factor=False
+                ).squeeze(1)
+                mask = mask > 0.5 # Convert back to boolean
+
+        rays = get_cube_raymap_torch(distance.shape[1], distance.shape[2], device)
+        
         _, H_new, W_new = distance.shape # Get new dimensions
 
         # --- Calculate 3D Vertices ---
@@ -781,10 +782,11 @@ class MeshBuilder(object):
             # Apply mask if provided
             if mask is not None:
                 mask_face = mask[face_idx]
+
                 mask_tl = mask_face[row, col]
-                mask_tr = mask_face[row, col + 1]
+                mask_tr = mask_face[row, (col + 1) % W_new]
                 mask_bl = mask_face[row + 1, col]
-                mask_br = mask_face[row + 1, col + 1]
+                mask_br = mask_face[row + 1, (col + 1) % W_new]
 
                 quad_keep_mask = ~(mask_tl | mask_tr | mask_bl | mask_br)
 

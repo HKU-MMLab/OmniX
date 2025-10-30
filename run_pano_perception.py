@@ -15,7 +15,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--panorama', type=str, required=True, help='Input panorama path')
     parser.add_argument('--device', type=str, default=None, help='Device to use: "cpu", "cuda", or "npu"')
-    parser.add_argument('--num_inference_steps', type=int, default=50, help='Number of inference steps')
+    parser.add_argument('--num_inference_steps', type=int, default=28, help='Number of inference steps')
     parser.add_argument('--output_dir', type=str, default='outputs/perception', help='Output directory')
     args = parser.parse_args()
 

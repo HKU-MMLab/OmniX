@@ -16,12 +16,13 @@ from src.modules.blend_h import FluxBlendMixin, tiled_decode, _decode
 from src.modules.cross_lora import apply_cross_lora_processors, disable_cross_lora_processors
 
 TASK_ADAPTERS = {
-    'image_to_pano': {'lora_names': ('masked_rgb', 'filled_rgb'), 'lora_condition_indices': (0,), 'lora_target_index': 1},
-    'rgb_to_albedo': {'lora_names': ('rgb', 'albedo'), 'lora_condition_indices': (0,), 'lora_target_index': 1},
-    'rgb_to_depth': {'lora_names': ('rgb', 'depth'), 'lora_condition_indices': (0,), 'lora_target_index': 1},
-    'rgb_to_normal': {'lora_names': ('rgb', 'normal'), 'lora_condition_indices': (0,), 'lora_target_index': 1},
-    'rgb_to_pbr': {'lora_names': ('rgb', 'pbr'), 'lora_condition_indices': (0,), 'lora_target_index': 1},
-    'rgb_to_semantic': {'lora_names': ('rgb', 'semantic'), 'lora_condition_indices': (0,), 'lora_target_index': 1},
+    'image_to_pano': {'lora_names': ('masked_rgb', 'filled_rgb'), 'lora_condition_indices': [0,], 'lora_target_index': 1},
+    'rgb_to_albedo': {'lora_names': ('rgb', 'albedo'), 'lora_condition_indices': [0,], 'lora_target_index': 1},
+    'rgb_to_depth': {'lora_names': ('rgb', 'depth'), 'lora_condition_indices': [0,], 'lora_target_index': 1},
+    'rgb_to_normal': {'lora_names': ('rgb', 'normal'), 'lora_condition_indices': [0,], 'lora_target_index': 1},
+    'rgb_camray_to_normal': {'lora_names': ('rgb', 'camray', 'normal'), 'lora_condition_indices': [0, 1], 'lora_target_index': 2},
+    'rgb_to_pbr': {'lora_names': ('rgb', 'pbr'), 'lora_condition_indices': [0,], 'lora_target_index': 1},
+    'rgb_to_semantic': {'lora_names': ('rgb', 'semantic'), 'lora_condition_indices': [0,], 'lora_target_index': 1},
 }
 
 
