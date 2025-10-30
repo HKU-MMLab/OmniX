@@ -131,7 +131,7 @@ def export_3d_scene(
         interpreter = 'blender -b -P'
     
     base_command = \
-        f'{interpreter} export_3d_scene_blender.py -- ' \
+        f'{interpreter} blender_export_3d_scene.py -- ' \
         f'--import_mesh_path "{import_mesh_path}" ' \
         f'--export_gltf_path "{export_gltf_path}" ' \
         f'--export_fbx_path "{export_fbx_path}" ' \

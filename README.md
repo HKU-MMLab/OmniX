@@ -6,7 +6,7 @@
 [![Paper](https://img.shields.io/badge/📑-Paper-red.svg)](https://arxiv.org/abs/xxxx.xxxxx)
 [![Model](https://img.shields.io/badge/🤗-Model-yellow.svg)](https://huggingface.co/KevinHuang/OmniX)
 [![Data](https://img.shields.io/badge/🤗-Data-green.svg)](https://huggingface.co/datasets/KevinHuang/PanoX)
-[![Video](https://img.shields.io/badge/🎬-Video-blue.svg)]()
+<!-- [![Video](https://img.shields.io/badge/🎬-Video-blue.svg)]() -->
 
 </div>
 
@@ -59,6 +59,7 @@ to use the Blender Python API without installing the full Blender, but we haven'
 ## 🚀 Inference
 
 ### Panorama Generation
+OmniX can generate high-quality panoramic images from image or text prompts:
 ```bash
 # Generation from Text
 python run_pano_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/generation_from_text"
@@ -67,13 +68,21 @@ python run_pano_generation.py --prompt "Photorealistic modern living room" --out
 python run_pano_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/generation_from_image_and_text"
 ```
 
+<img src="assets/pano_gen.png" width="100%">
+
 ### Panorama Perception
+Given an RGB panorama as input, OmniX can predict geometric, intrinsic, and semantic properties:
+
 ```bash
-# Perception (Depth, Normal, Albedo, Roughness, Metallic, Semantic) from Panorama
+# Perception (Distance, Normal, Albedo, Roughness, Metallic, Semantic) from Panorama
 python run_pano_perception.py --panorama "assets/examples/panorama.png" --output_dir "outputs/perception_from_panorama"
 ```
 
+<img src="assets/pano_perc.png" width="100%">
+
 ### Panorama Generation and Perception
+Naturally, we can combine panorama generation and perception to obtain a panoramic image with multiple property annotations:
+
 ```bash
 # Generation and Perception from Text
 python run_pano_all.py --prompt "Photorealistic modern living room" --output_dir "outputs/generation_and_perception_from_text"
@@ -82,7 +91,11 @@ python run_pano_all.py --prompt "Photorealistic modern living room" --output_dir
 python run_pano_all.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/generation_and_perception_from_image_and_text"
 ```
 
+<img src="assets/pano_gen_and_perc.png" width="100%">
+
 ### Graphics-Ready Scene Generation (Beta)
+Note that the code for graphics-ready scene reconstruction/generation is not ready and is still in progress.
+
 ```bash
 # Generation from Text
 python run_scene_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/construction_from_text"
@@ -100,16 +113,18 @@ python run_scene_generation.py --panorama "assets/examples/panorama.png" --outpu
 python run_scene_generation.py --panorama "assets/examples/panorama.png" --output_dir "outputs/construction_fast_from_panorama" --rgb_as_albedo --disable_normal --use_default_pbr --fill_invalid_depth
 ```
 
+<img src="assets/scene.png" width="100%">
+
 ## 👏 Acknowledgement
 This repository is based on many amazing research works and open-source projects: [PanFusion](https://github.com/chengzhag/PanFusion), [DreamCube](https://github.com/Yukun-Huang/DreamCube), [WorldGen](https://github.com/ZiYang-xie/WorldGen), [diffusers](https://github.com/huggingface/diffusers), [equilib](https://github.com/haruishi43/equilib), etc. Thanks all the authors for their selfless contributions to the community!
 
 ## 😉 Citation
 If you find this repository helpful for your work, please consider citing it as follows:
 ```bib
-@article{huang2025omnix,
+@article{omnix,
     title={OmniX: From Unified Panoramic Generation and Perception to Graphics-Ready 3D Scenes},
-    author={},
-    journal={arXiv preprint arXiv:xxxx.xxxxx},
+    author={Huang, Yukun and Yu, Jiwen and Zhou, Yanning and Wang, Jianan and Wang, Xintao and Wan, Pengfei and Liu, Xihui},
+    journal={arXiv preprint arXiv:2510.xxxxx},
     year={2025}
 }
 ```
