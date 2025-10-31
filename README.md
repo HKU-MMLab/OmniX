@@ -3,7 +3,7 @@
 <div align="center">
 
 [![Project Page](https://img.shields.io/badge/🏠-Project%20Page-green.svg)](https://yukun-huang.github.io/OmniX/)
-[![Paper](https://img.shields.io/badge/📑-Paper-red.svg)](https://arxiv.org/abs/xxxx.xxxxx)
+[![Paper](https://img.shields.io/badge/📑-Paper-red.svg)](https://arxiv.org/abs/2510.26800)
 [![Model](https://img.shields.io/badge/🤗-Model-yellow.svg)](https://huggingface.co/KevinHuang/OmniX)
 [![Data](https://img.shields.io/badge/🤗-Data-green.svg)](https://huggingface.co/datasets/KevinHuang/PanoX)
 <!-- [![Video](https://img.shields.io/badge/🎬-Video-blue.svg)]() -->
@@ -124,7 +124,7 @@ If you find this repository helpful for your work, please consider citing it as 
 @article{omnix,
     title={OmniX: From Unified Panoramic Generation and Perception to Graphics-Ready 3D Scenes},
     author={Huang, Yukun and Yu, Jiwen and Zhou, Yanning and Wang, Jianan and Wang, Xintao and Wan, Pengfei and Liu, Xihui},
-    journal={arXiv preprint arXiv:2510.xxxxx},
+    journal={arXiv preprint arXiv:2510.26800},
     year={2025}
 }
 ```
