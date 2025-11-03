@@ -56,7 +56,7 @@ pip install bpy
 ```
 to use the Blender Python API without installing the full Blender, but we haven't tested this carefully.
 
-### Patch for Compatibility (Optional, for exporting 3D scenes only):
+### Patch for compatibility (Optional, for exporting 3D scenes only):
 We use `basicr` to super-resolution albedo texture maps for high definition. After installing the dependencies, please modify one line in the file `~/.conda/envs/omnix/lib/python3.11/site-packages/basicsr/data/degradations.py` to ensure compatibility with recent versions of torchvision.
 
 Replace the following line:
