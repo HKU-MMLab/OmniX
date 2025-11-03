@@ -161,7 +161,8 @@ cython_debug/
 
 /.vscode
 
+/data
 /checkpoints
 /outputs
 
-weights
+/src/utils/weights

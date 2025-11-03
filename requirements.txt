@@ -1,19 +1,19 @@
-basicsr==1.4.2
-# bpy==4.4.3
+torch==2.4.1
+torchvision==0.19.1
 diffusers==0.32.0
+transformers==4.48.3
+sentencepiece
+peft==0.12.0
+numpy==2.2.6
 einops==0.8.0
 matplotlib==3.9.0
-numpy==2.2.6
-open3d==0.19.0
-opencv_contrib_python==4.10.0.82
-opencv_python==4.11.0.86
-opencv_python_headless==4.10.0.82
-peft==0.12.0
+open3d
+opencv_python
 pillow
 pymeshlab==2023.12.post1
-realesrgan==0.3.0
 scipy==1.13.1
-torch==2.4.1
-transformers
 trimesh==4.4.1
 xatlas==0.0.9
+basicsr==1.4.2
+realesrgan==0.3.0
+# bpy==4.4.3

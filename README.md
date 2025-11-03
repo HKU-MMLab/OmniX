@@ -47,7 +47,7 @@ conda activate omnix
 pip install -r requirements.txt
 ```
 
-### Install Blender (optional, for exporting 3D scenes only):
+### Install Blender (Optional, for exporting 3D scenes only):
 Please refer to the [official installation guide](https://www.blender.org/download/) to install Blender on your PC or remote server. We use Blender 4.4.3 for Linux.
 
 Alternatively, you may use:
@@ -56,16 +56,28 @@ pip install bpy
 ```
 to use the Blender Python API without installing the full Blender, but we haven't tested this carefully.
 
+### Patch for Compatibility (Optional, for exporting 3D scenes only):
+We use `basicr` to super-resolution albedo texture maps for high definition. After installing the dependencies, please modify one line in the file `~/.conda/envs/omnix/lib/python3.11/site-packages/basicsr/data/degradations.py` to ensure compatibility with recent versions of torchvision.
+
+Replace the following line:
+``` python
+from torchvision.transforms.functional_tensor import rgb_to_grayscale
+```
+with:
+``` python
+from torchvision.transforms.functional import rgb_to_grayscale
+```
+
 ## 🚀 Inference
 
 ### Panorama Generation
 OmniX can generate high-quality panoramic images from image or text prompts:
 ```bash
 # Generation from Text
-python run_pano_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/generation_from_text"
+python scripts/run_pano_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/generation_from_text"
 
 # Generation from Image and Text
-python run_pano_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/generation_from_image_and_text"
+python scripts/run_pano_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/generation_from_image_and_text"
 ```
 
 <img src="assets/pano_gen.png" width="100%">
@@ -75,7 +87,7 @@ Given an RGB panorama as input, OmniX can predict geometric, intrinsic, and sema
 
 ```bash
 # Perception (Distance, Normal, Albedo, Roughness, Metallic, Semantic) from Panorama
-python run_pano_perception.py --panorama "assets/examples/panorama.png" --output_dir "outputs/perception_from_panorama"
+python scripts/run_pano_perception.py --panorama "assets/examples/panorama.png" --output_dir "outputs/perception_from_panorama"
 ```
 
 <img src="assets/pano_perc.png" width="100%">
@@ -85,10 +97,10 @@ Naturally, we can combine panorama generation and perception to obtain a panoram
 
 ```bash
 # Generation and Perception from Text
-python run_pano_all.py --prompt "Photorealistic modern living room" --output_dir "outputs/generation_and_perception_from_text"
+python scripts/run_pano_all.py --prompt "Photorealistic modern living room" --output_dir "outputs/generation_and_perception_from_text"
 
 # Generation and Perception from Image and Text
-python run_pano_all.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/generation_and_perception_from_image_and_text"
+python scripts/run_pano_all.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/generation_and_perception_from_image_and_text"
 ```
 
 <img src="assets/pano_gen_and_perc.png" width="100%">
@@ -98,19 +110,19 @@ Note that the code for graphics-ready scene reconstruction/generation is not rea
 
 ```bash
 # Generation from Text
-python run_scene_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/construction_from_text"
+python scripts/run_scene_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/construction_from_text"
 # Generation from Text (Fast)
-python run_scene_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/construction_fast_from_text" --rgb_as_albedo --disable_normal --use_default_pbr --fill_invalid_depth
+python scripts/run_scene_generation.py --prompt "Photorealistic modern living room" --output_dir "outputs/construction_fast_from_text" --rgb_as_albedo --disable_normal --use_default_pbr --fill_invalid_depth
 
 # Generation from Image and Text
-python run_scene_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/construction_from_image_and_text"
+python scripts/run_scene_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/construction_from_image_and_text"
 # Generation from Image and Text (Fast)
-python run_scene_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/construction_fast_from_image_and_text" --rgb_as_albedo --disable_normal --use_default_pbr --fill_invalid_depth
+python scripts/run_scene_generation.py --image "assets/examples/image.png" --prompt "Photorealistic modern living room" --output_dir "outputs/construction_fast_from_image_and_text" --rgb_as_albedo --disable_normal --use_default_pbr --fill_invalid_depth
 
 # Generation from Panorama
-python run_scene_generation.py --panorama "assets/examples/panorama.png" --output_dir "outputs/construction_from_panorama"
+python scripts/run_scene_generation.py --panorama "assets/examples/panorama.png" --output_dir "outputs/construction_from_panorama"
 # Generation from Panorama (Fast)
-python run_scene_generation.py --panorama "assets/examples/panorama.png" --output_dir "outputs/construction_fast_from_panorama" --rgb_as_albedo --disable_normal --use_default_pbr --fill_invalid_depth
+python scripts/run_scene_generation.py --panorama "assets/examples/panorama.png" --output_dir "outputs/construction_fast_from_panorama" --rgb_as_albedo --disable_normal --use_default_pbr --fill_invalid_depth
 ```
 
 <img src="assets/scene.png" width="100%">

@@ -1,5 +1,7 @@
 import os
 import os.path as osp
+import sys
+sys.path.append(osp.abspath(osp.join(osp.dirname(__file__), '..')))
 import argparse
 from PIL import Image
 from typing import Optional
@@ -55,7 +57,7 @@ def run_perception(panorama: Image.Image):
     
     # Panorama Perception - Normal
     print('Perceiving panoramic normal...')
-    normal = omnix.perceive_panoramic_normal(panorama, num_inference_steps=num_inference_steps)
+    normal = omnix.perceive_panoramic_normal(panorama, num_inference_steps=num_inference_steps, with_camray=False)
     normal.save(osp.join(output_dir, 'output_normal.png'))
     print(f'Panoramic normal saved to {output_dir}')
     
@@ -94,7 +96,6 @@ if __name__ == '__main__':
         hf_repo='KevinHuang/OmniX',
         device=args.device,
         dtype=torch.bfloat16,
-        enable_model_cpu_offload=False,
     )
 
     height, width = args.height, args.width

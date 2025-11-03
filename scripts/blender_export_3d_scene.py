@@ -1,10 +1,9 @@
 import os
 import os.path as osp
-import argparse
-import bpy
-from typing import Optional
 import sys
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(osp.abspath(osp.join(osp.dirname(__file__), '..')))
+import bpy
+import argparse
 from src.utils.blender import (
     add_light,
     reset_scene,

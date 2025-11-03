@@ -1,5 +1,7 @@
 import os
 import os.path as osp
+import sys
+sys.path.append(osp.abspath(osp.join(osp.dirname(__file__), '..')))
 import argparse
 import numpy as np
 from PIL import Image
@@ -73,7 +75,7 @@ def run_perception(
     # Panorama Perception - Normal
     if not disable_normal:
         print('Perceiving panoramic normal...')
-        normal = omnix.perceive_panoramic_normal(panorama, num_inference_steps=num_inference_steps)
+        normal = omnix.perceive_panoramic_normal(panorama, num_inference_steps=num_inference_steps, with_camray=True)
         normal.save(osp.join(output_dir, 'output_normal.png'))
         print(f'Panoramic normal saved to {output_dir}')
         results['normal'] = normal
@@ -96,20 +98,6 @@ def run_perception(
     else:
         roughness, metallic = None, None
     
-    # Panorama Perception - Semantic
-    # print('Perceiving panoramic semantic...')
-    # semantic = omnix.perceive_panoramic_semantic(panorama, num_inference_steps=num_inference_steps)
-    # semantic.save(osp.join(output_dir, 'output_semantic.png'))
-    # results['semantic'] = semantic
-    # print(f'Panoramic semantic saved to {output_dir}')
-    
-    # Panorama Pereption - Alpha
-    # print('Perceiving panoramic alpha...')
-    # alpha = omnix.perceive_panoramic_alpha(panorama, num_inference_steps=num_inference_steps)
-    # alpha.save(osp.join(output_dir, 'output_alpha.png'))
-    # results['alpha'] = alpha
-    # print(f'Panoramic alpha saved to {output_dir}')
-    
     return results
 
 
@@ -131,7 +119,7 @@ def export_3d_scene(
         interpreter = 'blender -b -P'
     
     base_command = \
-        f'{interpreter} blender_export_3d_scene.py -- ' \
+        f'{interpreter} scripts/blender_export_3d_scene.py -- ' \
         f'--import_mesh_path "{import_mesh_path}" ' \
         f'--export_gltf_path "{export_gltf_path}" ' \
         f'--export_fbx_path "{export_fbx_path}" ' \
@@ -184,7 +172,6 @@ if __name__ == '__main__':
             hf_repo='KevinHuang/OmniX',
             device=args.device,
             dtype=torch.bfloat16,
-            enable_model_cpu_offload=False,
         )
 
         height, width = args.height, args.width

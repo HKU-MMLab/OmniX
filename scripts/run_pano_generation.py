@@ -1,5 +1,7 @@
 import os
 import os.path as osp
+import sys
+sys.path.append(osp.abspath(osp.join(osp.dirname(__file__), '..')))
 import argparse
 from PIL import Image
 import torch
@@ -38,7 +40,6 @@ if __name__ == '__main__':
         hf_repo='KevinHuang/OmniX',
         device=args.device,
         dtype=torch.bfloat16,
-        enable_model_cpu_offload=False,
     )
 
     # Image Generation

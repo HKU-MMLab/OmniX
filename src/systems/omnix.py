@@ -23,7 +23,7 @@ def get_device():
 
 
 class OmniX():
-    def __init__(self, hf_repo: str = 'KevinHuang/OmniX', device=None, dtype=torch.bfloat16, enable_model_cpu_offload=False) -> None:
+    def __init__(self, hf_repo: str = 'KevinHuang/OmniX', device=None, dtype=torch.bfloat16, enable_model_cpu_offload=True) -> None:
         self.hf_repo = hf_repo
         self.device = get_device() if device is None else device
         self.dtype = dtype
