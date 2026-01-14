@@ -33,7 +33,7 @@ class OmniX():
             torch_dtype=self.dtype,
         )
         if enable_model_cpu_offload:
-            pipe.enable_model_cpu_offload() #save some VRAM by offloading the model to CPU. Remove this if you have enough GPU power
+            pipe.enable_model_cpu_offload(device=self.device) #save some VRAM by offloading the model to CPU. Remove this if you have enough GPU power
         else:
             pipe.to(self.device)
 

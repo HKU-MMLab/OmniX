@@ -8,6 +8,8 @@ import torch
 from diffusers.utils.import_utils import is_torch_npu_available
 if is_torch_npu_available():
     import torch_npu
+    from torch_npu.contrib import transfer_to_npu
+    torch_npu.npu.set_compile_mode(jit_compile=False)
 
 from src.systems.omnix import OmniX
 from src.utils.image import stitch_images
