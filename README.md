@@ -24,7 +24,7 @@ We introduce <b>OmniX</b>, a family of flow matching generative models that achi
 - [x] Release inference code for panorama generation and perception.
 - [x] Release inference code for graphics-ready 3D scene generation (beta).
 - [ ] Release inference code for panorama completion.
-- [ ] Release PanoX dataset.
+- [x] Release PanoX dataset.
 - [ ] Release training code.
 
 ## ⚙️ Installation
